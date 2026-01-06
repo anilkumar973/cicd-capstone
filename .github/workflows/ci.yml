@@ -25,7 +25,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # ✅ FIXED backend build
+    #  FIXED backend build
     - name: Build backend image
       run: |
         docker build \
@@ -36,7 +36,6 @@ jobs:
       run: |
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
 
-    # ✅ FIXED frontend build
     - name: Build frontend image
       run: |
         docker build \
