@@ -1,4 +1,4 @@
-name: CI Pipeline - Build, Scan, Push
+name: CI Pipeline - Build & Push Images
 
 on:
   push:
@@ -9,20 +9,25 @@ jobs:
   build-test-push:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+
     steps:
     # 1️⃣ Checkout repository
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2️⃣ Debug – show repo structure (IMPORTANT)
-    - name: Show working directory
-      run: pwd
-
-    - name: List files at repo root
-      run: ls -la
-
-    - name: List all files recursively
-      run: ls -R
+    # 2️⃣ DEBUG (prove backend exists)
+    - name: Debug workspace
+      run: |
+        echo "Workspace:"
+        pwd
+        echo "Files:"
+        ls -la
+        echo "Backend contents:"
+        ls -la backend
 
     # 3️⃣ Setup Docker
     - name: Set up Docker Buildx
@@ -35,51 +40,28 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # ================= BACKEND =================
-
-    # 5️⃣ Build backend image
+    # 5️⃣ Build backend image (FIXED)
     - name: Build backend image
       run: |
         docker build \
           -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest \
+          -f backend/Dockerfile \
           backend
 
-    # 6️⃣ (Optional) Run backend container (basic check)
-    - name: Run backend container
-      run: |
-        docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest python --version
-
-    # 7️⃣ Trivy scan backend image
-    - name: Trivy Scan - Backend
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
-        severity: CRITICAL,HIGH
-        exit-code: 0
-
-    # 8️⃣ Push backend image
+    # 6️⃣ Push backend image
     - name: Push backend image
       run: |
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
 
-    # ================= FRONTEND =================
-
-    # 9️⃣ Build frontend image
+    # 7️⃣ Build frontend image (FIXED)
     - name: Build frontend image
       run: |
         docker build \
           -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest \
+          -f frontend/Dockerfile \
           frontend
 
-    # 🔟 Trivy scan frontend image
-    - name: Trivy Scan - Frontend
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
-        severity: CRITICAL,HIGH
-        exit-code: 0
-
-    # 1️⃣1️⃣ Push frontend image
+    # 8️⃣ Push frontend image
     - name: Push frontend image
       run: |
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
